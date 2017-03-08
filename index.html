@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" type="text/css" href="dist/css/barrager.css">
+  <link rel="stylesheet" href="https://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css">  
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+</head>
+<body>
+  <div class="container">
+  <div class="row">
+    <div class="col-md-6 col-md-offset-3" style="padding-top: 200px">
+      <div class="row row-padded">
+        <div class="col-sm-8 col-md-offset-2 text-center">
+          <h4 class="text-muted">
+            文明 dan 幕，best 弹幕（当前在线人数：<span id="clientNum">1</span>）
+          </h5>
+        </div>
+      </div>
+      <div class="row row-backbordered">
+        <div class="col-sm-12">
+        <div class="panel-actions input-group input-group-lg">
+                <input type="text" class="form-control" data-content="" id="messageBox" placeholder="发条弹幕试试。。" >
+                <span class="input-group-btn">
+                    <button class="btn btn-primary" type="button" onclick="emit()">发射 ^_^</button>
+                </span>
+              </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</body>
+
+<script type="text/javascript" src="dist/js/jquery.barrager.js"></script>
+<script type="text/javascript">
+  // var exampleSocket = new WebSocket("ws://23.106.150.217:9501");
+  var exampleSocket = new WebSocket("ws://192.168.33.10:9501");
+  var limitSecond = 0;
+  var intervalFlag = null;
+
+  document.onkeydown = function(event){
+    var ev = event || window.event;
+    if (ev.keyCode == 13) {
+        emit();
+    }
+  }
+
+  exampleSocket.onmessage = function (event) {
+    var data = JSON.parse(event.data);
+    $("#clientNum").html(data.total);
+    $('body').barrager(data.message);
+  }
+
+  function emit()
+  {
+    var content = $("#messageBox").val();
+    
+    if (!valid_content() || !emit_limit()) {
+      return ;
+    }
+    var item= {
+      info:content, //文字 
+      speed:8, //延迟,单位秒,默认8 
+    };
+    exampleSocket.send(JSON.stringify(item));
+    $("#messageBox").val("");
+    
+    $('body').barrager(item);
+  }
+
+  function valid_content()
+  {
+    if($("#messageBox").val().replace(/\s/g,"") == "") {
+      popoverAlter("弹幕不能为空呦。。。");
+      return false;
+    }
+    return true;
+  }
+
+  function emit_limit()
+  {
+    if(limitSecond != 0 || intervalFlag) {
+      popoverAlter("亲，手不累吗？歇会吧");
+      return false;
+    }
+    limitSecond = 2;
+    intervalFlag = setInterval(function(){
+        if (limitSecond == 0) {
+            clearInterval(intervalFlag);
+            intervalFlag = null;
+        } else {
+          limitSecond = limitSecond - 1;
+        }
+    },1000); 
+    return true;
+  }
+
+  function popoverAlter(content)
+  {
+    $("#messageBox").attr("data-placement", 'bottom');
+    $("#messageBox").attr("data-content", content);
+    $("#messageBox").popover('show');
+  }
+</script>
+
+</html>
